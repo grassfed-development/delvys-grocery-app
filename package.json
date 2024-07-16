@@ -1,0 +1,15 @@
+{
+  "name": "grocery-list-app",
+  "version": "1.0.0",
+  "description": "This project is a sample application for managing a grocery list using Node.js. It includes functionality to add and remove items, with the list being stored locally in a file and displayed on a webpage.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

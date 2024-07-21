@@ -1,52 +1,98 @@
+
+// importing express
 const express = require('express');
-const bodyParser = require('body-parser');
+
+// imports node.js filesystem <------------------
 const fs = require('fs');
-const path = require('path');
 
+//creating an express app
 const app = express();
+
+//Setting the Port
 const port = 3000;
-const itemsFilePath = path.join(__dirname, 'items.json');
 
-// Middleware
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// path to the json file
+const filePath = './grocery-list.json'; // <-------------------
 
-// Route to get all items
+// stuff for JSON 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files
+app.use(express.static('public'));
+
+
+// Handling GET request
 app.get('/items', (req, res) => {
-  console.log('GET /items');
-  fs.readFile(itemsFilePath, 'utf8', (err, data) => {
+  fs.readFile(filePath, (err, data) => {
     if (err) {
-      console.error('Error reading items file:', err);
-      res.status(500).send('Error reading items file');
+      res.status(500).send('Error reading file');
       return;
     }
     res.json(JSON.parse(data));
   });
 });
 
-// Route to add an item
-app.post('/items', (req, res) => {
-  console.log('POST /items:', req.body);
-  const newItem = req.body.item;
-  fs.readFile(itemsFilePath, 'utf8', (err, data) => {
+/* 
+  
+  app.post is handling POST request, in grassfed repo you had started line 
+56 but theres some missing symbols, missing the
+ (err) => { 
+its writing the updated data bacck to the file?
+
+theres this fs.writefile in app.post and app.delete but not app.get cause its 
+just getting it?
+fs.writeFile(filePath, JSON.stringify(items), (err) => {
+
+*/
+app.post('/items', (req, res) => {   
+  const newItem = req.body.item;     // <------- gets the new item?
+  fs.readFile(filePath, (err, data) => { 
     if (err) {
-      console.error('Error reading items file:', err);
-      res.status(500).send('Error reading items file');
+      res.status(500).send('Error reading file');
       return;
     }
     const items = JSON.parse(data);
     items.push(newItem);
-    fs.writeFile(itemsFilePath, JSON.stringify(items), (err) => {
+    fs.writeFile(filePath, JSON.stringify(items), (err) => { // <----- is this a callback?
       if (err) {
-        console.error('Error writing items file:', err);
-        res.status(500).send('Error writing items file');
+        res.status(500).send('Error writing file');
         return;
       }
-      res.status(201).send('Item added');
+      res.status(201).json({ message: 'Item added', item: newItem });
     });
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+
+// Handling delete request
+app.delete('/items/:item', (req, res) => {
+  const itemToDelete = decodeURIComponent(req.params.item);
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.status(500).send('Error reading file');
+      return;
+    }
+    let items = JSON.parse(data);
+    const index = items.indexOf(itemToDelete);
+    if (index > -1) {
+      items.splice(index, 1);
+      fs.writeFile(filePath, JSON.stringify(items), (err) => {
+        if (err) {
+          res.status(500).send('Error writing file');
+          return;
+        }
+        res.status(200).json({ success: true, message: 'Item deleted' });
+      });
+    } else {
+      res.status(404).json({ success: false, message: 'Item not found' });
+    }
+  });
 });
+
+
+// Starting the server
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+
